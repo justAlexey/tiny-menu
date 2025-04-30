@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "menu.h"
+#include "../inc/menu.h"
 
 #define MENU_MAX_LINE_LEN 32
 
@@ -46,13 +46,13 @@ static void menu_format_line(const MenuItem *item, int is_selected, char *line, 
         case MENU_PARAMETER:
             switch (item->data.parameter.type) {
                 case PARAM_INT:
-                    snprintf(line, line_size, "%s%-11s%s: %05ld", prefix, item->name, parameter_prefix, (long)item->data.parameter.value.i_val);
+                    snprintf(line, line_size, "%s%-11s%s: %05ld", prefix, item->name, parameter_prefix, (long)*item->data.parameter.value.i_val);
                     break;
                 case PARAM_FLOAT:
-                    snprintf(line, line_size, "%s%-11s%s: %03.2f", prefix, item->name, parameter_prefix, item->data.parameter.value.f_val);
+                    snprintf(line, line_size, "%s%-11s%s: %03.2f", prefix, item->name, parameter_prefix, *item->data.parameter.value.f_val);
                     break;
                 case PARAM_BOOL:
-                    snprintf(line, line_size, "%s%-11s%s: %s", prefix, item->name, parameter_prefix, item->data.parameter.value.b_val ? "ON" : "OFF");
+                    snprintf(line, line_size, "%s%-11s%s: %s", prefix, item->name, parameter_prefix, (*item->data.parameter.value.b_val.val &&(1<<item->data.parameter.value.b_val.bit)) ? "ON" : "OFF");
                     break;
                 default:
                     snprintf(line, line_size, "%s%-11s%s: ?", prefix, parameter_prefix, item->name);
@@ -151,16 +151,20 @@ MenuStatus handler_parameter_navigate_up(void){
     if(current_menu->type != MENU_PARAMETER) return MENU_ERR_INVALID_TYPE;
     switch(current_menu->data.parameter.type){
         case PARAM_INT:
-            if(current_menu->data.parameter.value.i_val < current_menu->data.parameter.max){
-                current_menu->data.parameter.value.i_val += current_menu->data.parameter.step;
+            int32_t temp = *current_menu->data.parameter.value.i_val;
+            if(temp < current_menu->data.parameter.max){
+                temp += current_menu->data.parameter.step;
+                *current_menu->data.parameter.value.i_val = temp;
                 status = MENU_OK;
-            }
+                }
             break;
         case PARAM_BOOL:
             current_menu->data.parameter.value.b_val = !current_menu->data.parameter.value.b_val;
             status = MENU_OK;
             break;
         case PARAM_FLOAT:
+            break;
+        default:
             break;
     }
     menu_display();

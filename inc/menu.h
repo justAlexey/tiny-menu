@@ -14,6 +14,7 @@ typedef enum {
 typedef enum {
     PARAM_INT,
     PARAM_FLOAT,
+    PARAM_CHAR,
     PARAM_BOOL
 } ParameterType;
 
@@ -32,9 +33,13 @@ typedef enum {
 typedef struct {
     ParameterType type;
     union {
-        int32_t i_val;
-        float f_val;
-        uint8_t b_val;
+        int32_t *i_val;
+        float *f_val;
+        uint8_t *c_val;
+        struct {
+            uint8_t *val;
+            uint8_t bit;
+        } b_val;
     } value;
     int32_t min;
     int32_t max;
@@ -51,27 +56,25 @@ typedef struct {
     void (*action)(void);
 } MenuFunction;
 
-struct MenuItem;
+union MenuData{
+    struct {
+        struct MenuItem *items;
+        int count;
+    } submenu;
+    MenuParameter parameter;
+    MenuInfo info;
+    MenuFunction function;
+};
 
 typedef struct MenuItem {
-    char name[20];
+    const char *name;
     MenuItemType type;
     struct MenuItem *parent;
-    union {
-        struct {
-            struct MenuItem *items;
-            int count;
-        } submenu;
-        MenuParameter parameter;
-        MenuInfo info;
-        MenuFunction function;
-    } data;
+    union MenuData data;
 } MenuItem;
 
 // Callback для вывода строки меню
 typedef void (*MenuPrintLineCallback)(const char *str, uint32_t line);
-// Callback для других пользовательских действий (пример)
-typedef void (*MenuUserActionCallback)(void);
 
 // Регистрация callback-функций с возвратом статуса
 MenuStatus menu_register_print_line_callback(MenuPrintLineCallback cb);
